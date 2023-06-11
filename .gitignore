@@ -1,0 +1,8 @@
+output.cgi.dSYM
+public
+*.o
+server
+client
+output.cgi
+.DS_Store
+```
