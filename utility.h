@@ -43,7 +43,7 @@ Queue *queueCreate(int max_size); // inside c
 
 void queueDestroy(Queue *queue); // inside c
 
-void queueInsert(Queue *queue, Request *data); // inside c
+void queueInsert(Queue *queue, Request *data, int thread_id); // inside c
 
 Request *queuePopHead(Queue *queue); // inside c
 
