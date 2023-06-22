@@ -23,7 +23,7 @@ void queueDestroy(Queue *queue)
     free(queue);
 }
 
-void queueInsert(Queue *queue, RequestStruct *data, int thread_id) // need to add thread_id
+void queueInsert(Queue *queue, Request *data, int thread_id) // need to add thread_id
 {
     Node *newNode = (Node *)malloc(sizeof(*newNode));
     newNode->data = data;
@@ -43,13 +43,13 @@ void queueInsert(Queue *queue, RequestStruct *data, int thread_id) // need to ad
     queue->size++;
 }
 
-RequestStruct *queuePopHead(Queue *queue)
+Request *queuePopHead(Queue *queue)
 {
     if (queue->size == 0)
     {
         return NULL;
     }
-    RequestStruct *data = queue->head->data;
+    Request *data = queue->head->data;
     Node *temp = queue->head;
     queue->head = queue->head->next;
     free(temp);
@@ -57,7 +57,7 @@ RequestStruct *queuePopHead(Queue *queue)
     return data;
 }
 
-RequestStruct *queueRemoveById(Queue *queue, int thread_id)
+Request *queueRemoveById(Queue *queue, int thread_id)
 {
     if (queue->size == 0)
     {
@@ -84,7 +84,7 @@ RequestStruct *queueRemoveById(Queue *queue, int thread_id)
             {
                 temp->next->prev = temp->prev;
             }
-            RequestStruct *data = temp->data;
+            Request *data = temp->data;
             free(temp);
             queue->size--;
             return data;
@@ -128,7 +128,7 @@ void processQueueDestroy(ProcessQueue *pq)
     free(pq);
 }
 
-RequestStruct *getNewRequest(ProcessQueue *pq, RequestStruct *request)
+Request *getNewRequest(ProcessQueue *pq, Request *request)
 {
     pthread_mutex_lock(&(pq->mutex));
     while (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
@@ -140,20 +140,20 @@ RequestStruct *getNewRequest(ProcessQueue *pq, RequestStruct *request)
     pthread_mutex_unlock(&(pq->mutex));
 }
 
-RequestStruct *runRequest(ProcessQueue *pq, Stats *stats)
+Request *runRequest(ProcessQueue *pq /*Stats *stats*/)
 {
     pthread_mutex_lock(&(pq->mutex));
     while (pq->waiting_queue->size == 0)
     {
         pthread_cond_wait(&(pq->not_empty), &(pq->mutex));
     }
-    RequestStruct *request = queuePopHead(pq->waiting_queue);
+    Request *request = queuePopHead(pq->waiting_queue);
     queueInsert(pq->running_queue, request, pthread_self()); // stats->id?
 
-    struct timeval end;
-    gettimeofday(&end, NULL);
-    stats->arrival_time = request->arrival_time;
-    timersub(&end, &(request->arrival_time), &(stats->dispatch_time));
+    // struct timeval end;
+    // gettimeofday(&end, NULL);
+    // stats->arrival_time = request->arrival_time;
+    // timersub(&end, &(request->arrival_time), &(stats->dispatch_time));
 
     pthread_mutex_unlock(&(pq->mutex));
     return request;
@@ -162,7 +162,7 @@ RequestStruct *runRequest(ProcessQueue *pq, Stats *stats)
 void removeRequest(ProcessQueue *pq, int thread_id)
 {
     pthread_mutex_lock(&(pq->mutex));
-    RequestStruct *request = queueRemoveById(pq->running_queue, thread_id);
+    Request *request = queueRemoveById(pq->running_queue, thread_id);
     close(request->connfd);
     free(request);
     pthread_cond_signal(&(pq->not_full));

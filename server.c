@@ -23,17 +23,17 @@ void *thread_handler(void *t_args)
 {
     threadAux *args = (threadAux *)t_args;
     ProcessQueue *pq = args->request;
-    Stats stats;
-    stats.count = 0;
-    stats.static_count = 0;
-    stats.dynamic_count = 0;
-    stats.id = args->id; // pthread_self()?
+    // Stats stats;
+    // stats.count = 0;
+    // stats.static_count = 0;
+    // stats.dynamic_count = 0;
+    // stats.id = args->id; // pthread_self()?
 
     while (1)
     {
-        RequestStruct *data = runRequest(pq, &stats);
+        Request *data = runRequest(pq /*&stats*/);
         int connfd = data->connfd;
-        requestHandle(connfd, &stats);
+        requestHandle(connfd, /*&stats*/);
         removeRequest(pq, args->id); // pthread_self()?
     }
     return NULL;
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
     listenfd = Open_listenfd(port);
     while (1)
     {
-        RequestStruct *rqst = malloc(sizeof(*rqst));
+        Request *rqst = malloc(sizeof(*rqst));
         if (!rqst)
         {
             processQueueDestroy(pq);

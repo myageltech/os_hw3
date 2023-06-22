@@ -3,14 +3,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>
-#include "request_struct.h" // ??
 #include <stdbool.h>
 #include "segel.h"
 #include <sys/time.h>
 
+typedef struct
+{
+    int connfd;
+    struct timeval arrival_time;
+} Request;
+
 typedef struct node
 {
-    RequestStruct *data;
+    Request *data;
     int thread_id; // default is -1
     struct node *next;
     struct node *prev;
@@ -38,19 +43,19 @@ Queue *queueCreate(int max_size); // inside c
 
 void queueDestroy(Queue *queue); // inside c
 
-void queueInsert(Queue *queue, RequestStruct *data); // inside c
+void queueInsert(Queue *queue, Request *data); // inside c
 
-RequestStruct *queuePopHead(Queue *queue); // inside c
+Request *queuePopHead(Queue *queue); // inside c
 
-RequestStruct *queueRemoveById(Queue *queue, int thread_id); // inside c
+Request *queueRemoveById(Queue *queue, int thread_id); // inside c
 
 ProcessQueue *processQueueCreate(int max_threads, int max_size); // inside c
 
 void processQueueDestroy(ProcessQueue *queue); // inside c
 
-RequestStruct *getNewRequest(ProcessQueue *pq, RequestStruct *request); // inside c
+Request *getNewRequest(ProcessQueue *pq, Request *request); // inside c
 
-RequestStruct *runRequest(ProcessQueue *pq, Stats *stats);
+Request *runRequest(ProcessQueue *pq /*Stats *stats*/);
 
 void removeRequest(ProcessQueue *pq, int thread_id); // inside c
 
