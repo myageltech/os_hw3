@@ -1,6 +1,5 @@
 #include "segel.h"
 #include "request.h"
-#include "request_struct.h"
 #include "utility.h"
 //
 // server.c: A very, very simple web server
