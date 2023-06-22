@@ -103,8 +103,8 @@ ProcessQueue *processQueueCreate(int max_threads, int max_size)
     }
     pq->max_size = max_size;
     // pq->max_threads = max_threads;
-    pq->running_queue = createQueue(max_threads);
-    pq->waiting_queue = createQueue(max_size - max_threads);
+    pq->running_queue = queueCreate(max_threads);
+    pq->waiting_queue = queueCreate(max_size - max_threads);
     if (!(pq->running_queue) || !(pq->waiting_queue))
     {
         free(pq->waiting_queue);
