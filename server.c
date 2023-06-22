@@ -21,7 +21,7 @@ typedef struct
 void *thread_handler(void *t_args)
 {
     threadAux *args = (threadAux *)t_args;
-    ProcessQueue *pq = args->request;
+    ProcessQueue *pq = args->pq;
     // Stats stats;
     // stats.count = 0;
     // stats.static_count = 0;
@@ -32,7 +32,7 @@ void *thread_handler(void *t_args)
     {
         Request *data = runRequest(pq /*&stats*/);
         int connfd = data->connfd;
-        requestHandle(connfd, /*&stats*/);
+        requestHandle(connfd /*&stats*/);
         removeRequest(pq, args->id); // pthread_self()?
     }
     return NULL;
@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
     //
     // HW3: Create some threads...
     //
-    threadAux *thrd_args = malloc(thread_max * sizeof(*t_args));
+    threadAux *thrd_args = malloc(thread_max * sizeof(*thrd_args));
     pthread_t *threads = malloc(thread_max * sizeof(*threads));
     if (!thrd_args || !threads)
     {
