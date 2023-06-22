@@ -133,9 +133,9 @@ Request *getNewRequest(ProcessQueue *pq, Request *request)
     pthread_mutex_lock(&(pq->mutex));
     while (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
     {
-        pthread_cond_wait(pq->not_full, pq->mutex);
+        pthread_cond_wait(&pq->not_full, &pq->mutex);
     }
-    queueInsert(pq->waiting_queue, request);
+    queueInsert(pq->waiting_queue, request, -1);
     pthread_cond_signal(&(pq->not_empty));
     pthread_mutex_unlock(&(pq->mutex));
 }
