@@ -138,7 +138,6 @@ void getNewRequest(ProcessQueue *pq, Request *request)
     queueInsert(pq->waiting_queue, request, -1);
     pthread_cond_signal(&(pq->not_empty));
     pthread_mutex_unlock(&(pq->mutex));
-    // return request;
 }
 
 Request *runRequest(ProcessQueue *pq /*Stats *stats*/)
@@ -163,8 +162,11 @@ Request *runRequest(ProcessQueue *pq /*Stats *stats*/)
 void removeRequest(ProcessQueue *pq, int thread_id)
 {
     pthread_mutex_lock(&(pq->mutex));
-    Request *request = queueRemoveById(pq->running_queue, thread_id);
-    close(request->connfd);
+    Request *request = queueRemoveById(pq->running_queue, pthread_self());
+    if (request)
+    {
+        close(request->connfd);
+    }
     free(request);
     pthread_cond_signal(&(pq->not_full));
     pthread_mutex_unlock(&(pq->mutex));
