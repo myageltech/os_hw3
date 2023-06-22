@@ -104,7 +104,6 @@ int main(int argc, char *argv[])
     {
         clientlen = sizeof(clientaddr);
         connfd = Accept(listenfd, (SA *)&clientaddr, (socklen_t *)&clientlen);
-
         RequestStruct *request = malloc(sizeof(RequestStruct));
         request->connfd = connfd;
         gettimeofday(&request->arrival_time, NULL);

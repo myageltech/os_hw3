@@ -16,29 +16,30 @@ void queueDestroy(Queue *queue)
     {
         Node *temp = queue->head;
         queue->head = queue->head->next;
+        close(temp->data->connfd);
+        free(temp->data);
         free(temp);
     }
     free(queue);
 }
 
-void queueInsert(Queue *queue, RequestStruct *data) //need to add thread_id
+void queueInsert(Queue *queue, RequestStruct *data, int thread_id) // need to add thread_id
 {
     Node *newNode = (Node *)malloc(sizeof(*newNode));
     newNode->data = data;
     newNode->next = NULL;
-    newNode->prev = NULL;
-    // newNode->thread_id = data->thread_id;
+    // newNode->prev = NULL;
+    newNode->thread_id = thread_id;
     if (queue->size == 0)
     {
         queue->head = newNode;
-        queue->tail = newNode;
     }
     else
     {
         queue->tail->next = newNode;
-        newNode->prev = queue->tail;
-        queue->tail = newNode;
     }
+    newNode->prev = queue->tail;
+    queue->tail = newNode;
     queue->size++;
 }
 
@@ -96,24 +97,32 @@ RequestStruct *queueRemoveById(Queue *queue, int thread_id)
 ProcessQueue *processQueueCreate(int max_threads, int max_size)
 {
     ProcessQueue *pq = (ProcessQueue *)malloc(sizeof(*pq));
-    if(!pq){
-        exit(1); //maybe change to return NULL?
+    if (!pq)
+    {
+        exit(1); // maybe change to return NULL?
     }
     pq->max_size = max_size;
     pq->max_threads = max_threads;
     pq->running_queue = createQueue(max_threads);
     pq->waiting_queue = createQueue(max_size - max_threads);
-    if(!(pq->running_queue) || !(pq->waiting_queue)){
+    if (!(pq->running_queue) || !(pq->waiting_queue))
+    {
+        free(pq->waiting_queue);
+        free(pq->running_queue);
+        free(pq);
         exit(1);
     }
     pthread_mutex_init(&(pq->mutex), NULL);
-    pthread_cond_init(&(pq->waiting_queue_empty), NULL);
-    pthread_cond_init(&(pq->waiting_queue_full), NULL);
+    pthread_cond_init(&(pq->not_empty), NULL);
+    pthread_cond_init(&(pq->not_full), NULL);
     return pq;
 }
 
 void processQueueDestroy(ProcessQueue *pq)
 {
+    pthread_cond_destroy(&(pq->not_empty));
+    pthread_cond_destroy(&(pq->not_full));
+    pthread_mutex_destroy(&(pq->mutex));
     queueDestroy(pq->running_queue);
     queueDestroy(pq->waiting_queue);
     free(pq);
@@ -122,31 +131,40 @@ void processQueueDestroy(ProcessQueue *pq)
 RequestStruct *getNewRequest(ProcessQueue *pq, RequestStruct *request)
 {
     pthread_mutex_lock(&(pq->mutex));
-    while (pq->waiting_queue->size + pq->running_queue->size == pq->max_size)
+    while (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
     {
-        pthread_cond_wait(pq->waiting_queue_full, pq->mutex);
+        pthread_cond_wait(pq->not_full, pq->mutex);
     }
-    if (pq->running_queue->size < pq->running_queue->max_size)
-    {
-        queueInsert(pq->running_queue, request);
-    }
-    else
-    {
-        queueInsert(pq->waiting_queue, request);
-    }  
-    pthread_cond_signal(&(pq->waiting_queue_empty));
+    queueInsert(pq->waiting_queue, request);
+    pthread_cond_signal(&(pq->not_empty));
     pthread_mutex_unlock(&(pq->mutex));
 }
 
-RequestStruct *removeRequest(ProcessQueue *pq, int thread_id)
+RequestStruct *runRequest(ProcessQueue *pq, Stats *stats)
+{
+    pthread_mutex_lock(&(pq->mutex));
+    while (pq->waiting_queue->size == 0)
+    {
+        pthread_cond_wait(&(pq->not_empty), &(pq->mutex));
+    }
+    RequestStruct *request = queuePopHead(pq->waiting_queue);
+    queueInsert(pq->running_queue, request, pthread_self()); // stats->id?
+
+    struct timeval end;
+    gettimeofday(&end, NULL);
+    stats->arrival_time = request->arrival_time;
+    timersub(&end, &(request->arrival_time), &(stats->dispatch_time));
+
+    pthread_mutex_unlock(&(pq->mutex));
+    return request;
+}
+
+void removeRequest(ProcessQueue *pq, int thread_id)
 {
     pthread_mutex_lock(&(pq->mutex));
     RequestStruct *request = queueRemoveById(pq->running_queue, thread_id);
-    if (pq->running_queue->size == 0)
-    {
-        pthread_cond_signal(&(pq->waiting_queue_empty));
-    }
-    pthread_cond_destroy(&(pq->waiting_queue_full));
+    close(request->connfd);
+    free(request);
+    pthread_cond_signal(&(pq->not_full));
     pthread_mutex_unlock(&(pq->mutex));
-    return request;
 }
