@@ -128,7 +128,7 @@ void processQueueDestroy(ProcessQueue *pq)
     free(pq);
 }
 
-Request *getNewRequest(ProcessQueue *pq, Request *request)
+void getNewRequest(ProcessQueue *pq, Request *request)
 {
     pthread_mutex_lock(&(pq->mutex));
     while (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
@@ -138,6 +138,7 @@ Request *getNewRequest(ProcessQueue *pq, Request *request)
     queueInsert(pq->waiting_queue, request, -1);
     pthread_cond_signal(&(pq->not_empty));
     pthread_mutex_unlock(&(pq->mutex));
+    // return request;
 }
 
 Request *runRequest(ProcessQueue *pq /*Stats *stats*/)

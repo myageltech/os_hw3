@@ -53,7 +53,7 @@ ProcessQueue *processQueueCreate(int max_threads, int max_size); // inside c
 
 void processQueueDestroy(ProcessQueue *queue); // inside c
 
-Request *getNewRequest(ProcessQueue *pq, Request *request); // inside c
+void getNewRequest(ProcessQueue *pq, Request *request); // inside c
 
 Request *runRequest(ProcessQueue *pq /*Stats *stats*/);
 
