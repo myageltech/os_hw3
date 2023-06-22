@@ -15,7 +15,7 @@
 typedef struct
 {
     ProcessQueue *pq;
-    int id;
+    pthread_t thread;
 } threadAux;
 
 void *thread_handler(void *t_args)
@@ -33,7 +33,7 @@ void *thread_handler(void *t_args)
         Request *data = runRequest(pq /*&stats*/);
         int connfd = data->connfd;
         requestHandle(connfd /*&stats*/);
-        removeRequest(pq, args->id); // pthread_self()?
+        removeRequest(pq, pthread_self()); // pthread_self()?
     }
     return NULL;
 }
@@ -61,12 +61,10 @@ int main(int argc, char *argv[])
     // HW3: Create some threads...
     //
     threadAux *thrd_args = malloc(thread_max * sizeof(*thrd_args));
-    pthread_t *threads = malloc(thread_max * sizeof(*threads));
-    if (!thrd_args || !threads)
+    // pthread_t *threads = malloc(thread_max * sizeof(*threads));
+    if (!thrd_args)
     {
         processQueueDestroy(pq);
-        free(thrd_args);
-        free(threads);
         fprintf(stderr, "Error: malloc failed\n");
         exit(1);
     }
@@ -74,8 +72,15 @@ int main(int argc, char *argv[])
     {
         // make sure thread id is i
         thrd_args[i].pq = pq;
-        thrd_args[i].id = i;
-        pthread_create(&threads[i], NULL, thread_handler, (void *)&thrd_args[i]);
+        // thrd_args[i].thread = malloc(sizeof(pthread_t));
+        // if (!thrd_args[i].thread)
+        // {
+        //     processQueueDestroy(pq);
+        //     free(thrd_args); // free inner mallocs
+        //     fprintf(stderr, "Error: malloc failed\n");
+        //     exit(1);
+        // }
+        pthread_create(&(thrd_args[i].thread), NULL, thread_handler, (void *)&thrd_args[i]);
     }
     listenfd = Open_listenfd(port);
     while (1)
@@ -85,7 +90,6 @@ int main(int argc, char *argv[])
         {
             processQueueDestroy(pq);
             free(thrd_args);
-            free(threads);
             fprintf(stderr, "Error: malloc failed\n");
             exit(1);
         }
@@ -96,7 +100,6 @@ int main(int argc, char *argv[])
         getNewRequest(pq, rqst);
     }
     processQueueDestroy(pq);
-    free(thrd_args);
-    free(threads);
+    free(thrd_args); // free inner mallocs
     return 0;
 }
