@@ -38,7 +38,7 @@ void *thread_handler(void *t_args)
     return NULL;
 }
 
-void getargs(int *port, int *thread_max, int *process_max, int argc, char *argv[])
+void getargs(int *port, int *thread_max, int *process_max, int *process_real_max, POLICY *policy, int argc, char *argv[])
 {
     if (argc < 2)
     {
@@ -48,20 +48,55 @@ void getargs(int *port, int *thread_max, int *process_max, int argc, char *argv[
     *port = atoi(argv[1]);
     *thread_max = atoi(argv[2]);
     *process_max = atoi(argv[3]);
+    *process_real_max = *process_max;
+    char *policy_str = argv[4];
+    if (strcmp(policy_str, "block") == 0)
+    {
+        *policy = BLOCK;
+    }
+    else if (strcmp(policy_str, "dt"))
+    {
+        *policy = DROP_TAIL;
+    }
+    else if (strcmp(policy_str, "dh") == 0)
+    {
+        *policy = DROP_HEAD;
+    }
+    else if (strcmp(policy_str, "bf") == 0)
+    {
+        *policy = BLOCK_FLUSH;
+    }
+    else if (strcmp(policy_str, "dynamic") == 0)
+    {
+        *policy = DYNAMIC;
+        if (argc != 6)
+        {
+            fprintf(stderr, "Error: invalid number of arguments\n");
+            exit(1);
+        }
+        *process_real_max = atoi(argv[5]);
+    }
+    // else if (strcmp(policy_str, "random") == 0)
+    // {
+    //     *policy = DROP_RANDOM;
+    // }
+    else
+    {
+        fprintf(stderr, "Error: invalid policy\n");
+        exit(1);
+    }
 }
 
 int main(int argc, char *argv[])
 {
-    int listenfd, connfd, port, clientlen, thread_max, process_max;
+    int listenfd, connfd, port, clientlen, thread_max, process_max, procces_real_max;
+    POLICY policy;
     struct sockaddr_in clientaddr;
 
-    getargs(&port, &thread_max, &process_max, argc, argv);
-    ProcessQueue *pq = processQueueCreate(thread_max, process_max);
-    //
-    // HW3: Create some threads...
-    //
+    getargs(&port, &thread_max, &process_max, &process_real_max, &policy, argc, argv);
+    ProcessQueue *pq = processQueueCreate(thread_max, process_max, real_max_size, policy);
+
     threadAux *thrd_args = malloc(thread_max * sizeof(*thrd_args));
-    // pthread_t *threads = malloc(thread_max * sizeof(*threads));
     if (!thrd_args)
     {
         processQueueDestroy(pq);
@@ -70,16 +105,7 @@ int main(int argc, char *argv[])
     }
     for (int i = 0; i < thread_max; i++)
     {
-        // make sure thread id is i
         thrd_args[i].pq = pq;
-        // thrd_args[i].thread = malloc(sizeof(pthread_t));
-        // if (!thrd_args[i].thread)
-        // {
-        //     processQueueDestroy(pq);
-        //     free(thrd_args); // free inner mallocs
-        //     fprintf(stderr, "Error: malloc failed\n");
-        //     exit(1);
-        // }
         pthread_create(&(thrd_args[i].thread), NULL, thread_handler, (void *)&thrd_args[i]);
     }
     listenfd = Open_listenfd(port);
@@ -89,6 +115,10 @@ int main(int argc, char *argv[])
         if (!rqst)
         {
             processQueueDestroy(pq);
+            for (int i = 0; i < thread_max; i++)
+            {
+                pthread_join(thrd_args[i].thread, NULL);
+            }
             free(thrd_args);
             fprintf(stderr, "Error: malloc failed\n");
             exit(1);
@@ -100,6 +130,10 @@ int main(int argc, char *argv[])
         getNewRequest(pq, rqst);
     }
     processQueueDestroy(pq);
-    free(thrd_args); // free inner mallocs
+    for (int i = 0; i < thread_max; i++)
+    {
+        pthread_join(thrd_args[i].thread, NULL);
+    }
+    free(thrd_args);
     return 0;
 }

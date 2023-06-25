@@ -7,6 +7,16 @@
 #include "segel.h"
 #include <sys/time.h>
 
+typedef enum
+{
+    BLOCK,
+    DROP_TAIL,
+    DROP_HEAD,
+    BLOCK_FLUSH,
+    DYNAMIC,
+    DROP_RANDOM
+} POLICY;
+
 typedef struct
 {
     int connfd;
@@ -32,10 +42,13 @@ typedef struct
 typedef struct
 {
     int max_size;
+    int real_max_size;
     Queue *waiting_queue;
     Queue *running_queue;
+    POLICY policy;
     pthread_mutex_t mutex;
     pthread_cond_t not_full;
+    pthread_cond_t empty;
     pthread_cond_t not_empty;
 } ProcessQueue;
 
@@ -49,7 +62,7 @@ Request *queuePopHead(Queue *queue); // inside c
 
 Request *queueRemoveById(Queue *queue, int thread_id); // inside c
 
-ProcessQueue *processQueueCreate(int max_threads, int max_size); // inside c
+ProcessQueue *processQueueCreate(int max_threads, int max_size, int real_max_size, POLICY policy); // inside c
 
 void processQueueDestroy(ProcessQueue *queue); // inside c
 

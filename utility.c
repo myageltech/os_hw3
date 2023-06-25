@@ -94,7 +94,7 @@ Request *queueRemoveById(Queue *queue, int thread_id)
     return NULL;
 }
 
-ProcessQueue *processQueueCreate(int max_threads, int max_size)
+ProcessQueue *processQueueCreate(int max_threads, int max_size, int real_max_size, POLICY policy)
 {
     ProcessQueue *pq = (ProcessQueue *)malloc(sizeof(*pq));
     if (!pq)
@@ -102,9 +102,11 @@ ProcessQueue *processQueueCreate(int max_threads, int max_size)
         exit(1); // maybe change to return NULL?
     }
     pq->max_size = max_size;
+    pq->real_max_size = real_max_size;
     // pq->max_threads = max_threads;
     pq->running_queue = queueCreate(max_threads);
     pq->waiting_queue = queueCreate(max_size - max_threads);
+    pq->policy = policy;
     if (!(pq->running_queue) || !(pq->waiting_queue))
     {
         free(pq->waiting_queue);
@@ -113,6 +115,7 @@ ProcessQueue *processQueueCreate(int max_threads, int max_size)
         exit(1);
     }
     pthread_mutex_init(&(pq->mutex), NULL);
+    pthread_cond_init(&(pq->empty), NULL);
     pthread_cond_init(&(pq->not_empty), NULL);
     pthread_cond_init(&(pq->not_full), NULL);
     return pq;
@@ -120,6 +123,7 @@ ProcessQueue *processQueueCreate(int max_threads, int max_size)
 
 void processQueueDestroy(ProcessQueue *pq)
 {
+    pthread_cond_destroy(&(pq->empty));
     pthread_cond_destroy(&(pq->not_empty));
     pthread_cond_destroy(&(pq->not_full));
     pthread_mutex_destroy(&(pq->mutex));
@@ -131,10 +135,62 @@ void processQueueDestroy(ProcessQueue *pq)
 void getNewRequest(ProcessQueue *pq, Request *request)
 {
     pthread_mutex_lock(&(pq->mutex));
-    while (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
+    switch (pq->policy)
     {
-        pthread_cond_wait(&pq->not_full, &pq->mutex);
+    case BLOCK:
+        while (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
+        {
+            pthread_cond_wait(&pq->not_full, &pq->mutex);
+        }
+        break;
+    case DROP_TAIL:
+        if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
+        {
+            pthread_mutex_unlock(&(pq->mutex));
+            close(request->connfd);
+            free(request);
+            return;
+        }
+        break;
+    case DROP_HEAD:
+        if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
+        {
+            // pthread_mutex_unlock(&(pq->mutex));
+            Request *temp = queuePopHead(pq->waiting_queue);
+            close(temp->connfd);
+            free(temp);
+        }
+        break;
+    case BLOCK_FLUSH:
+        while (pq->waiting_queue->size + pq->running_queue->size > 0)
+        {
+            pthread_cond_wait(&pq->empty, &pq->mutex);
+        }
+        break;
+    case DYNAMIC:
+        if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
+        {
+            pthread_mutex_unlock(&(pq->mutex));
+            close(request->connfd);
+            free(request);
+            if (pq->max_size < pq->real_max_size)
+            {
+                pq->max_size++;
+                pq->waiting_queue->max_size++;
+            }
+            return;
+        }
+        break;
     }
+    // case DROP_RANDOM:
+    //     if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
+    //     {
+    //         pthread_mutex_unlock(&(pq->mutex));
+    //         close(request->connfd);
+    //         free(request);
+    //         return;
+    //     }
+    //     break;
     queueInsert(pq->waiting_queue, request, -1);
     pthread_cond_signal(&(pq->not_empty));
     pthread_mutex_unlock(&(pq->mutex));
@@ -168,6 +224,10 @@ void removeRequest(ProcessQueue *pq, int thread_id)
         close(request->connfd);
     }
     free(request);
+    if (pq->waiting_queue->size + pq->running_queue->size == 0)
+    {
+        pthread_cond_signal(&(pq->empty));
+    }
     pthread_cond_signal(&(pq->not_full));
     pthread_mutex_unlock(&(pq->mutex));
 }
