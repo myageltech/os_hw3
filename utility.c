@@ -161,10 +161,11 @@ void getNewRequest(ProcessQueue *pq, Request *request)
         }
         break;
     case BLOCK_FLUSH:
-        while (pq->waiting_queue->size + pq->running_queue->size > 0)
-        {
-            pthread_cond_wait(&pq->empty, &pq->mutex);
-        }
+        if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
+            while (pq->waiting_queue->size + pq->running_queue->size > 0)
+            {
+                pthread_cond_wait(&pq->empty, &pq->mutex);
+            }
         break;
     case DYNAMIC:
         if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
