@@ -40,7 +40,7 @@ void *thread_handler(void *t_args)
 
 void getargs(int *port, int *thread_max, int *process_max, int *process_real_max, POLICY *policy, int argc, char *argv[])
 {
-    if (argc < 2)
+    if (argc < 5)
     {
         fprintf(stderr, "Usage: %s <port>\n", argv[0]);
         exit(1);
@@ -54,7 +54,7 @@ void getargs(int *port, int *thread_max, int *process_max, int *process_real_max
     {
         *policy = BLOCK;
     }
-    else if (strcmp(policy_str, "dt"))
+    else if (strcmp(policy_str, "dt") == 0)
     {
         *policy = DROP_TAIL;
     }
