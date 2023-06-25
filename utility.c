@@ -102,9 +102,8 @@ ProcessQueue *processQueueCreate(int max_threads, int max_size, int real_max_siz
         exit(1); // maybe change to return NULL?
     }
     pq->max_size = max_size;
-    pq->real_max_size = real_max_size;
-    // pq->max_threads = max_threads;
-    pq->running_queue = queueCreate(max_threads);
+    pq->real_max_size = real_max_size
+                            pq->running_queue = queueCreate(max_threads);
     pq->waiting_queue = queueCreate(max_size - max_threads);
     pq->policy = policy;
     if (!(pq->running_queue) || !(pq->waiting_queue))
@@ -199,10 +198,10 @@ void getNewRequest(ProcessQueue *pq, Request *request)
             }
         }
         break;
-        queueInsert(pq->waiting_queue, request, -1);
-        pthread_cond_signal(&(pq->not_empty));
-        pthread_mutex_unlock(&(pq->mutex));
     }
+    queueInsert(pq->waiting_queue, request, -1);
+    pthread_cond_signal(&(pq->not_empty));
+    pthread_mutex_unlock(&(pq->mutex));
 }
 
 Request *runRequest(ProcessQueue *pq /*Stats *stats*/)
