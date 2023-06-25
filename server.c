@@ -93,8 +93,8 @@ int main(int argc, char *argv[])
     POLICY policy;
     struct sockaddr_in clientaddr;
 
-    getargs(&port, &thread_max, &process_max, &process_real_max, &policy, argc, argv);
-    ProcessQueue *pq = processQueueCreate(thread_max, process_max, real_max_size, policy);
+    getargs(&port, &thread_max, &process_max, &procces_real_max, &policy, argc, argv);
+    ProcessQueue *pq = processQueueCreate(thread_max, process_max, procces_real_max, policy);
 
     threadAux *thrd_args = malloc(thread_max * sizeof(*thrd_args));
     if (!thrd_args)
