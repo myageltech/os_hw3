@@ -38,7 +38,7 @@ void *thread_handler(void *t_args)
     return NULL;
 }
 
-void getargs(int *port, int *thread_max, int *process_max, int *process_real_max, POLICY *policy, int argc, char *argv[])
+void getargs(int *port, int *thread_max, int *process_max, int *dynamic_max_size, POLICY *policy, int argc, char *argv[])
 {
     if (argc < 5)
     {
@@ -48,7 +48,7 @@ void getargs(int *port, int *thread_max, int *process_max, int *process_real_max
     *port = atoi(argv[1]);
     *thread_max = atoi(argv[2]);
     *process_max = atoi(argv[3]);
-    *process_real_max = *process_max;
+    *dynamic_max_size = *process_max;
     char *policy_str = argv[4];
     if (strcmp(policy_str, "block") == 0)
     {
@@ -74,7 +74,7 @@ void getargs(int *port, int *thread_max, int *process_max, int *process_real_max
             fprintf(stderr, "Error: invalid number of arguments\n");
             exit(1);
         }
-        *process_real_max = atoi(argv[5]);
+        *dynamic_max_size = atoi(argv[5]);
     }
     else if (strcmp(policy_str, "random") == 0)
     {

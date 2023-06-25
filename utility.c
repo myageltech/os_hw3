@@ -94,7 +94,7 @@ Request *queueRemoveById(Queue *queue, int thread_id)
     return NULL;
 }
 
-ProcessQueue *processQueueCreate(int max_threads, int max_size, int real_max_size, POLICY policy)
+ProcessQueue *processQueueCreate(int max_threads, int max_size, int dynamic_max_size, POLICY policy)
 {
     ProcessQueue *pq = (ProcessQueue *)malloc(sizeof(*pq));
     if (!pq)
@@ -102,7 +102,7 @@ ProcessQueue *processQueueCreate(int max_threads, int max_size, int real_max_siz
         exit(1); // maybe change to return NULL?
     }
     pq->max_size = max_size;
-    pq->real_max_size = real_max_size;
+    pq->dynamic_max_size = dynamic_max_size;
     pq->running_queue = queueCreate(max_threads);
     pq->waiting_queue = queueCreate(max_size - max_threads);
     pq->policy = policy;
@@ -172,7 +172,7 @@ void getNewRequest(ProcessQueue *pq, Request *request)
             pthread_mutex_unlock(&(pq->mutex));
             close(request->connfd);
             free(request);
-            if (pq->max_size < pq->real_max_size)
+            if (pq->max_size < pq->dynamic_max_size)
             {
                 pq->max_size++;
                 pq->waiting_queue->max_size++;
