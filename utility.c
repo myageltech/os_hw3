@@ -166,8 +166,7 @@ void getNewRequest(ProcessQueue *pq, Request *request)
         {
             while (pq->waiting_queue->size + pq->running_queue->size > 0)
             {
-                printf("waiting queue size: %d\n", pq->waiting_queue->size);
-                printf("running queue size: %d\n", pq->running_queue->size);
+                printf("waiting: %d. running: %d.", pq->waiting_queue->size, pq->running_queue->size);
                 pthread_cond_wait(&pq->empty, &pq->mutex);
             }
         }
@@ -218,7 +217,7 @@ Request *runRequest(ProcessQueue *pq /*Stats *stats*/)
         pthread_cond_wait(&(pq->not_empty), &(pq->mutex));
     }
     Request *request = queuePopHead(pq->waiting_queue);
-    queueInsert(pq->running_queue, request, (int)(unsigned long)pthread_self()); // stats->id?
+    queueInsert(pq->running_queue, request, (int)(unsigned long)pthread_self());
 
     // struct timeval end;
     // gettimeofday(&end, NULL);
