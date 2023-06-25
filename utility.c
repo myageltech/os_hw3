@@ -1,4 +1,5 @@
 #include "utility.h"
+#include <stdio.h>
 
 Queue *queueCreate(int max_size)
 {
@@ -94,17 +95,17 @@ Request *queueRemoveById(Queue *queue, int thread_id)
     return NULL;
 }
 
-ProcessQueue *processQueueCreate(int max_threads, int max_size, int dynamic_max_size, POLICY policy)
+ProcessQueue *processQueueCreate(int max_threads, int max_queue, int dynamic_max_size, POLICY policy)
 {
     ProcessQueue *pq = (ProcessQueue *)malloc(sizeof(*pq));
     if (!pq)
     {
         exit(1); // maybe change to return NULL?
     }
-    pq->max_size = max_size;
+    pq->max_size = max_threads + max_queue;
     pq->dynamic_max_size = dynamic_max_size;
     pq->running_queue = queueCreate(max_threads);
-    pq->waiting_queue = queueCreate(max_size - max_threads);
+    pq->waiting_queue = queueCreate(max_queue);
     pq->policy = policy;
     if (!(pq->running_queue) || !(pq->waiting_queue))
     {
@@ -162,10 +163,14 @@ void getNewRequest(ProcessQueue *pq, Request *request)
         break;
     case BLOCK_FLUSH:
         if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
+        {
             while (pq->waiting_queue->size + pq->running_queue->size > 0)
             {
+                printf("waiting queue size: %d\n", pq->waiting_queue->size);
+                printf("running queue size: %d\n", pq->running_queue->size);
                 pthread_cond_wait(&pq->empty, &pq->mutex);
             }
+        }
         break;
     case DYNAMIC:
         if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)

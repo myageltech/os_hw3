@@ -38,7 +38,7 @@ void *thread_handler(void *t_args)
     return NULL;
 }
 
-void getargs(int *port, int *thread_max, int *process_max, int *dynamic_max_size, POLICY *policy, int argc, char *argv[])
+void getargs(int *port, int *thread_max, int *max_queue, int *dynamic_max_size, POLICY *policy, int argc, char *argv[])
 {
     if (argc < 5)
     {
@@ -47,8 +47,8 @@ void getargs(int *port, int *thread_max, int *process_max, int *dynamic_max_size
     }
     *port = atoi(argv[1]);
     *thread_max = atoi(argv[2]);
-    *process_max = atoi(argv[3]);
-    *dynamic_max_size = *process_max;
+    *max_queue = atoi(argv[3]);
+    *dynamic_max_size = *max_queue;
     char *policy_str = argv[4];
     if (strcmp(policy_str, "block") == 0)
     {
@@ -89,12 +89,12 @@ void getargs(int *port, int *thread_max, int *process_max, int *dynamic_max_size
 
 int main(int argc, char *argv[])
 {
-    int listenfd, connfd, port, clientlen, thread_max, process_max, procces_real_max;
+    int listenfd, connfd, port, clientlen, thread_max, max_queue, procces_real_max;
     POLICY policy;
     struct sockaddr_in clientaddr;
 
-    getargs(&port, &thread_max, &process_max, &procces_real_max, &policy, argc, argv);
-    ProcessQueue *pq = processQueueCreate(thread_max, process_max, procces_real_max, policy);
+    getargs(&port, &thread_max, &max_queue, &procces_real_max, &policy, argc, argv);
+    ProcessQueue *pq = processQueueCreate(thread_max, max_queue, procces_real_max, policy);
 
     threadAux *thrd_args = malloc(thread_max * sizeof(*thrd_args));
     if (!thrd_args)
