@@ -6,7 +6,7 @@ SECONDS=0
 > empty.txt
 >expected.out
 
-Desktop/technion/operatingsystem/my_hws/hw3/wet/webserver-files/client localhost 2002 home.html > trash.out  2> errors.txt #should get error and size changes by 1;
+Desktop/technion/operatingsystem/my_hws/hw3/wet/webserver-files/client Desktop/technion/operatingsystem/my_hws/hw3/wet/webserver-files/public 2002 home.html > trash.out  2> errors.txt #should get error and size changes by 1;
 echo "Rio_readlineb error: Connection reset by peer" >expected.out
 
 while ( ! (cmp -s errors.txt  expected.out)) ; do 
@@ -28,7 +28,7 @@ if ((($SECONDS<9)) || (($SECONDS >12)));then
 fi
 
 
-Desktop/technion/operatingsystem/my_hws/hw3/wet/webserver-files/client localhost 2002 home.html > trash.out  2> errors.txt  #should be handled 
+Desktop/technion/operatingsystem/my_hws/hw3/wet/webserver-files/client Desktop/technion/operatingsystem/my_hws/hw3/wet/webserver-files/public 2002 home.html > trash.out  2> errors.txt  #should be handled 
 sleep 1
 
 

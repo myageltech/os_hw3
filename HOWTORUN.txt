@@ -14,6 +14,6 @@ once the terminals open go to the terminal tab with the name test tab and wait f
 
 remember to change ur output.c back before u submit 
 
-manually running with previous tests is still preferred since sometimes running ./client localhost 2002 home.html and having the server close it might not give any message at all 
+manually running with previous tests is still preferred since sometimes running ./client Desktop/technion/operatingsystem/my_hws/hw3/wet/webserver-files 2002 home.html and having the server close it might not give any message at all 
 (its supposed to send "Rio_readlineb error: Connection reset by peer" but sometimes it doesnt  thats why its preferred to do it manually and check by urself)
 
