@@ -14,6 +14,7 @@
 // HW3: Parse the new arguments too
 typedef struct
 {
+    int id;
     ProcessQueue *pq;
     pthread_t thread;
 } threadAux;
@@ -30,10 +31,11 @@ void *thread_handler(void *t_args)
 
     while (1)
     {
-        Request *data = runRequest(pq /*&stats*/);
+        Request *data = runRequest(pq, t_args->id /*&stats*/);
         int connfd = data->connfd;
         requestHandle(connfd /*&stats*/);
-        removeRequest(pq, (int)(unsigned long)pthread_self()); // pthread_self()?
+        removeRequest(pq, t_args->id); // pthread_self()?
+        // removeRequest(pq, (int)(unsigned long)pthread_self());
     }
     return NULL;
 }
@@ -105,6 +107,7 @@ int main(int argc, char *argv[])
     }
     for (int i = 0; i < thread_max; i++)
     {
+        thrd_args[i].id = i;
         thrd_args[i].pq = pq;
         pthread_create(&(thrd_args[i].thread), NULL, thread_handler, (void *)&thrd_args[i]);
     }

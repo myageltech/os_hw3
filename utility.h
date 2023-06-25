@@ -68,7 +68,7 @@ void processQueueDestroy(ProcessQueue *queue); // inside c
 
 void getNewRequest(ProcessQueue *pq, Request *request); // inside c
 
-Request *runRequest(ProcessQueue *pq /*Stats *stats*/);
+Request *runRequest(ProcessQueue *pq, int thread_id /*Stats *stats*/);
 
 void removeRequest(ProcessQueue *pq, int thread_id); // inside c
 

@@ -163,7 +163,7 @@ void getNewRequest(ProcessQueue *pq, Request *request)
     case BLOCK_FLUSH:
         if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
         {
-            while (pq->waiting_queue->size + pq->running_queue->size > 0)
+            while (pq->waiting_queue->size && pq->running_queue->size)
             {
                 pthread_cond_wait(&pq->empty, &pq->mutex);
             }
@@ -208,7 +208,7 @@ void getNewRequest(ProcessQueue *pq, Request *request)
     pthread_mutex_unlock(&(pq->mutex));
 }
 
-Request *runRequest(ProcessQueue *pq /*Stats *stats*/)
+Request *runRequest(ProcessQueue *pq, int thread_id /*Stats *stats*/)
 {
     pthread_mutex_lock(&(pq->mutex));
     while (pq->waiting_queue->size == 0)
@@ -216,7 +216,7 @@ Request *runRequest(ProcessQueue *pq /*Stats *stats*/)
         pthread_cond_wait(&(pq->not_empty), &(pq->mutex));
     }
     Request *request = queuePopHead(pq->waiting_queue);
-    queueInsert(pq->running_queue, request, (int)(unsigned long)pthread_self()); // stats->id?
+    queueInsert(pq->running_queue, request, thread_id); // thread_id()?
 
     // struct timeval end;
     // gettimeofday(&end, NULL);
@@ -230,13 +230,13 @@ Request *runRequest(ProcessQueue *pq /*Stats *stats*/)
 void removeRequest(ProcessQueue *pq, int thread_id)
 {
     pthread_mutex_lock(&(pq->mutex));
-    Request *request = queueRemoveById(pq->running_queue, (int)(unsigned long)pthread_self());
+    Request *request = queueRemoveById(pq->running_queue, thread_id); // pthread_self()?
     if (request)
     {
         close(request->connfd);
     }
     free(request);
-    if (pq->waiting_queue->size + pq->running_queue->size == 0)
+    if (!(pq->waiting_queue->size || pq->running_queue->size))
     {
         pthread_cond_signal(&(pq->empty));
     }
