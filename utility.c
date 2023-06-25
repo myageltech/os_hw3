@@ -203,39 +203,40 @@ void getNewRequest(ProcessQueue *pq, Request *request)
         pthread_cond_signal(&(pq->not_empty));
         pthread_mutex_unlock(&(pq->mutex));
     }
+}
 
-    Request *runRequest(ProcessQueue * pq /*Stats *stats*/)
+Request *runRequest(ProcessQueue *pq /*Stats *stats*/)
+{
+    pthread_mutex_lock(&(pq->mutex));
+    while (pq->waiting_queue->size == 0)
     {
-        pthread_mutex_lock(&(pq->mutex));
-        while (pq->waiting_queue->size == 0)
-        {
-            pthread_cond_wait(&(pq->not_empty), &(pq->mutex));
-        }
-        Request *request = queuePopHead(pq->waiting_queue);
-        queueInsert(pq->running_queue, request, (int)(unsigned long)pthread_self()); // stats->id?
-
-        // struct timeval end;
-        // gettimeofday(&end, NULL);
-        // stats->arrival_time = request->arrival_time;
-        // timersub(&end, &(request->arrival_time), &(stats->dispatch_time));
-
-        pthread_mutex_unlock(&(pq->mutex));
-        return request;
+        pthread_cond_wait(&(pq->not_empty), &(pq->mutex));
     }
+    Request *request = queuePopHead(pq->waiting_queue);
+    queueInsert(pq->running_queue, request, (int)(unsigned long)pthread_self()); // stats->id?
 
-    void removeRequest(ProcessQueue * pq, int thread_id)
+    // struct timeval end;
+    // gettimeofday(&end, NULL);
+    // stats->arrival_time = request->arrival_time;
+    // timersub(&end, &(request->arrival_time), &(stats->dispatch_time));
+
+    pthread_mutex_unlock(&(pq->mutex));
+    return request;
+}
+
+void removeRequest(ProcessQueue *pq, int thread_id)
+{
+    pthread_mutex_lock(&(pq->mutex));
+    Request *request = queueRemoveById(pq->running_queue, (int)(unsigned long)pthread_self());
+    if (request)
     {
-        pthread_mutex_lock(&(pq->mutex));
-        Request *request = queueRemoveById(pq->running_queue, (int)(unsigned long)pthread_self());
-        if (request)
-        {
-            close(request->connfd);
-        }
-        free(request);
-        if (pq->waiting_queue->size + pq->running_queue->size == 0)
-        {
-            pthread_cond_signal(&(pq->empty));
-        }
-        pthread_cond_signal(&(pq->not_full));
-        pthread_mutex_unlock(&(pq->mutex));
+        close(request->connfd);
     }
+    free(request);
+    if (pq->waiting_queue->size + pq->running_queue->size == 0)
+    {
+        pthread_cond_signal(&(pq->empty));
+    }
+    pthread_cond_signal(&(pq->not_full));
+    pthread_mutex_unlock(&(pq->mutex));
+}

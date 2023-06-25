@@ -76,10 +76,10 @@ void getargs(int *port, int *thread_max, int *process_max, int *process_real_max
         }
         *process_real_max = atoi(argv[5]);
     }
-    // else if (strcmp(policy_str, "random") == 0)
-    // {
-    //     *policy = DROP_RANDOM;
-    // }
+    else if (strcmp(policy_str, "random") == 0)
+    {
+        *policy = DROP_RANDOM;
+    }
     else
     {
         fprintf(stderr, "Error: invalid policy\n");
