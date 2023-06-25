@@ -2,4 +2,4 @@
 
 cd scripts/
 
-./tabs.sh
+gnome-terminal --window -- bash -c "./tabs.sh "
