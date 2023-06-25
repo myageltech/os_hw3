@@ -31,10 +31,10 @@ void *thread_handler(void *t_args)
 
     while (1)
     {
-        Request *data = runRequest(pq, t_args->id /*&stats*/);
+        Request *data = runRequest(pq, args->id /*&stats*/);
         int connfd = data->connfd;
         requestHandle(connfd /*&stats*/);
-        removeRequest(pq, t_args->id); // pthread_self()?
+        removeRequest(pq, args->id); // pthread_self()?
         // removeRequest(pq, (int)(unsigned long)pthread_self());
     }
     return NULL;
