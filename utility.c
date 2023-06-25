@@ -137,13 +137,13 @@ void getNewRequest(ProcessQueue *pq, Request *request)
     switch (pq->policy)
     {
     case BLOCK:
-        while (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
+        if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
         {
             pthread_cond_wait(&pq->not_full, &pq->mutex);
         }
         break;
     case DROP_TAIL:
-        if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
+        if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
         {
             pthread_mutex_unlock(&(pq->mutex));
             close(request->connfd);
@@ -152,7 +152,7 @@ void getNewRequest(ProcessQueue *pq, Request *request)
         }
         break;
     case DROP_HEAD:
-        if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
+        if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
         {
             // pthread_mutex_unlock(&(pq->mutex));
             Request *temp = queuePopHead(pq->waiting_queue);
@@ -161,13 +161,15 @@ void getNewRequest(ProcessQueue *pq, Request *request)
         }
         break;
     case BLOCK_FLUSH:
-        while (pq->waiting_queue->size + pq->running_queue->size > 0)
+        if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
         {
-            pthread_cond_wait(&pq->empty, &pq->mutex);
+            while (pq->waiting_queue->size + pq->running_queue->size > 0)
+            {
+                pthread_cond_wait(&pq->empty, &pq->mutex);
+            }
         }
         break;
     case DYNAMIC:
-        // if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
         if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
         {
             pthread_mutex_unlock(&(pq->mutex));
@@ -182,7 +184,7 @@ void getNewRequest(ProcessQueue *pq, Request *request)
         }
         break;
     case DROP_RANDOM:
-        if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
+        if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
         {
             for (int i = 0; i < pq->waiting_queue->max_size / 2; i++)
             {
