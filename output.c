@@ -42,6 +42,7 @@ int main(int argc, char *argv[])
 
   double t1 = Time_GetSeconds();
   usleep(spinfor * 1e6);
+  sleep(10);
   double t2 = Time_GetSeconds();
 
   /* Make the response body */

@@ -33,7 +33,7 @@ void *thread_handler(void *t_args)
         Request *data = runRequest(pq /*&stats*/);
         int connfd = data->connfd;
         requestHandle(connfd /*&stats*/);
-        removeRequest(pq, pthread_self()); // pthread_self()?
+        removeRequest(pq, (int)(unsigned long)pthread_self()); // pthread_self()?
     }
     return NULL;
 }
