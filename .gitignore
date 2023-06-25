@@ -1,5 +1,3 @@
 output.cgi.dSYM
-public
 *.o
-output.cgi
 .DS_Store
