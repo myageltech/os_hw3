@@ -167,7 +167,8 @@ void getNewRequest(ProcessQueue *pq, Request *request)
         }
         break;
     case DYNAMIC:
-        if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
+        // if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
+        if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
         {
             pthread_mutex_unlock(&(pq->mutex));
             close(request->connfd);
