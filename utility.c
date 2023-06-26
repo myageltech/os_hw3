@@ -94,17 +94,21 @@ Request *queueRemoveById(Queue *queue, int thread_id)
     return NULL;
 }
 
-ProcessQueue *processQueueCreate(int max_threads, int max_size, int dynamic_max_size, POLICY policy)
+ProcessQueue *processQueueCreate(int max_threads, int max_queue, int dynamic_max_size, POLICY policy)
 {
+    if (max_threads < 0 || max_queue < 0 || dynamic_max_size < 0)
+    {
+        return NULL;
+    }
     ProcessQueue *pq = (ProcessQueue *)malloc(sizeof(*pq));
     if (!pq)
     {
         exit(1); // maybe change to return NULL?
     }
-    pq->max_size = max_size;
+    pq->max_size = max_threads + max_queue;
     pq->dynamic_max_size = dynamic_max_size;
     pq->running_queue = queueCreate(max_threads);
-    pq->waiting_queue = queueCreate(max_size - max_threads);
+    pq->waiting_queue = queueCreate(max_queue);
     pq->policy = policy;
     if (!(pq->running_queue) || !(pq->waiting_queue))
     {
