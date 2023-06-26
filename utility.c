@@ -96,7 +96,7 @@ Request *queueRemoveById(Queue *queue, int thread_id)
 
 ProcessQueue *processQueueCreate(int max_queue, int dynamic_max_size, POLICY policy)
 {
-    if (max_queue < 0 || dynamic_max_size < 0)
+    if (max_queue <= 0 || dynamic_max_size <= 0)
     {
         return NULL;
     }
@@ -139,7 +139,7 @@ void getNewRequest(ProcessQueue *pq, Request *request)
 {
     pthread_mutex_lock(&(pq->mutex));
     if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
-        // if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
+    {
         switch (pq->policy)
         {
         case BLOCK:
@@ -176,11 +176,9 @@ void getNewRequest(ProcessQueue *pq, Request *request)
         {
             close(request->connfd);
             free(request);
-            if (pq->max_size < pq->dynamic_max_size)
-            {
-                pq->max_size++;
-                // pq->waiting_queue->max_size++;
-            }
+            // if (pq->max_size < pq->dynamic_max_size)
+            //     pq->max_size++;
+            pq->max_size += (pq->max_size < pq->dynamic_max_size);
             pthread_mutex_unlock(&(pq->mutex));
             return;
         }
@@ -203,6 +201,7 @@ void getNewRequest(ProcessQueue *pq, Request *request)
             break;
         }
         }
+    }
     queueInsert(pq->waiting_queue, request, -1);
     pthread_cond_signal(&(pq->not_empty));
     pthread_mutex_unlock(&(pq->mutex));

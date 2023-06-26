@@ -100,7 +100,7 @@ int main(int argc, char *argv[])
     if (!pq)
         exit(1);
     threadAux *thrd_args = malloc(thread_max * sizeof(*thrd_args));
-    if (!thrd_args)
+    if (!thrd_args || thread_max <= 0)
     {
         processQueueDestroy(pq);
         fprintf(stderr, "Error: malloc failed\n");
