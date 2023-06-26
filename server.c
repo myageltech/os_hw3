@@ -25,7 +25,7 @@ void *thread_handler(void *t_args)
     ProcessQueue *pq = args->pq;
     while (1)
     {
-        Request *data = runRequest(pq, args->id, &args->stats);
+        Request *data = runRequest(pq, &args->stats);
         int connfd = data->connfd;
         requestHandle(connfd, &args->stats);
         removeRequest(pq, (args->stats).id);
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
     {
         thrd_args[i].id = i;
         thrd_args[i].pq = pq;
-        thrd_args.stats = {{0, 0}, {0, 0}, i, 0, 0, 0};
+        thrd_args->stats = {{0, 0}, {0, 0}, i, 0, 0, 0};
         pthread_create(&(thrd_args[i].thread), NULL, thread_handler, (void *)&thrd_args[i]);
     }
     listenfd = Open_listenfd(port);
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
         }
         clientlen = sizeof(clientaddr);
         connfd = Accept(listenfd, (SA *)&clientaddr, (socklen_t *)&clientlen);
-        gettimeofday(&(rqst->arrival_time), NULL);
+        gettimeofday(&(rqst->req_arrival), NULL);
         rqst->connfd = connfd;
         getNewRequest(pq, rqst);
     }

@@ -19,6 +19,9 @@ all: server client output.cgi
 utility: segel.o
 	$(CC) $(CFLAGS) -o utility segel.o
 
+request: request.o segel.o
+	$(CC) $(CFLAGS) -o request request.o segel.o
+
 server: server.o request.o segel.o utility.o
 	$(CC) $(CFLAGS) -o server server.o request.o segel.o utility.o $(LIBS)
 
