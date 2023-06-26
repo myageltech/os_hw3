@@ -168,6 +168,7 @@ void getNewRequest(ProcessQueue *pq, Request *request)
         {
             while (pq->waiting_queue->size + pq->running_queue->size > 0)
             {
+                printf("WAITING\n");
                 pthread_cond_wait(&pq->empty, &pq->mutex);
             }
             break;
