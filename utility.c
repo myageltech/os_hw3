@@ -176,8 +176,6 @@ void getNewRequest(ProcessQueue *pq, Request *request)
         {
             close(request->connfd);
             free(request);
-            // if (pq->max_size < pq->dynamic_max_size)
-            //     pq->max_size++;
             pq->max_size += (pq->max_size < pq->dynamic_max_size);
             pthread_mutex_unlock(&(pq->mutex));
             return;
@@ -235,8 +233,9 @@ void removeRequest(ProcessQueue *pq, int thread_id)
         close(request->connfd);
     }
     free(request);
-    if (!(pq->waiting_queue->size || pq->running_queue->size))
+    if (pq->waiting_queue->size + pq->running_queue->size <= 0)
     {
+        printf("EMPTY\n");
         pthread_cond_signal(&(pq->empty));
     }
     pthread_cond_signal(&(pq->not_full));
