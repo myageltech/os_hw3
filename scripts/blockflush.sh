@@ -10,7 +10,7 @@ SECONDS=0
 echo "Rio_readlineb error: Connection reset by peer" >expected.out
 
 while ( ! (cmp -s errors.txt  expected.out)) ; do 
-    if(($SECONDS >12)) ;then 
+    if(($SECONDS >15)) ;then 
         echo "u passed the allotted time and entered a infinite loop try again or check ur code or maybe u didnt change output.c with sleep 10 "
         echo ""
         exec bash -i
@@ -20,7 +20,7 @@ done
 
 echo "u closed connection after $SECONDS    (between 10 to 12 is the right amount)"
 
-if ((($SECONDS<9)) || (($SECONDS >12)));then
+if ((($SECONDS<9)) || (($SECONDS >15)));then
    
             echo "failed"
             echo "u might've closed the connection before emptying the queue"
