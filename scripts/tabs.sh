@@ -7,7 +7,7 @@ cd ..
 echo "dynamic or blockflush ? (choose option by number)"
 select yn in "dynamic" "blockflush"; do
     case $yn in
-        dynamic )     gnome-terminal --tab -- bash -c "./server 2002 2 2 dynamic 3; exec bash -i";   break;;
+        dynamic )     gnome-terminal --tab -- bash -c "./server 2002 4 2 dynamic 3; exec bash -i";   break;;
         blockflush )  gnome-terminal --tab -- bash -c "./server 2002 3 3 bf ; exec bash -i" ;    gnome-terminal --tab -- bash -c "./client localhost 2002 output.cgi?1; exec bash -i"; break;;
     esac
 done
