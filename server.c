@@ -11,31 +11,24 @@
 // Most of the work is done within routines written in request.c
 //
 
-// HW3: Parse the new arguments too
 typedef struct
 {
     int id;
     ProcessQueue *pq;
     pthread_t thread;
+    Stats stats;
 } threadAux;
 
 void *thread_handler(void *t_args)
 {
     threadAux *args = (threadAux *)t_args;
     ProcessQueue *pq = args->pq;
-    // Stats stats;
-    // stats.count = 0;
-    // stats.static_count = 0;
-    // stats.dynamic_count = 0;
-    // stats.id = args->id; // pthread_self()?
-
     while (1)
     {
-        Request *data = runRequest(pq, args->id /*&stats*/);
+        Request *data = runRequest(pq, args->id, &args->stats);
         int connfd = data->connfd;
-        requestHandle(connfd /*&stats*/);
-        removeRequest(pq, args->id); // pthread_self()?
-        // removeRequest(pq, (int)(unsigned long)pthread_self());
+        requestHandle(connfd, &args->stats);
+        removeRequest(pq, (args->stats).id);
     }
     return NULL;
 }
@@ -110,6 +103,7 @@ int main(int argc, char *argv[])
     {
         thrd_args[i].id = i;
         thrd_args[i].pq = pq;
+        thrd_args.stats = {{0, 0}, {0, 0}, i, 0, 0, 0};
         pthread_create(&(thrd_args[i].thread), NULL, thread_handler, (void *)&thrd_args[i]);
     }
     listenfd = Open_listenfd(port);

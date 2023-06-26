@@ -168,7 +168,7 @@ void getNewRequest(ProcessQueue *pq, Request *request)
         {
             while (pq->waiting_queue->size + pq->running_queue->size > 0)
             {
-                printf("WAITING\n");
+                // printf("WAITING\n");
                 pthread_cond_wait(&pq->empty, &pq->mutex);
             }
             break;
@@ -206,7 +206,7 @@ void getNewRequest(ProcessQueue *pq, Request *request)
     pthread_mutex_unlock(&(pq->mutex));
 }
 
-Request *runRequest(ProcessQueue *pq, int thread_id /*Stats *stats*/)
+Request *runRequest(ProcessQueue *pq, Stats *stats)
 {
     pthread_mutex_lock(&(pq->mutex));
     while (pq->waiting_queue->size == 0)
@@ -214,12 +214,13 @@ Request *runRequest(ProcessQueue *pq, int thread_id /*Stats *stats*/)
         pthread_cond_wait(&(pq->not_empty), &(pq->mutex));
     }
     Request *request = queuePopHead(pq->waiting_queue);
-    queueInsert(pq->running_queue, request, thread_id); // thread_id()?
-
-    // struct timeval end;
-    // gettimeofday(&end, NULL);
-    // stats->arrival_time = request->arrival_time;
-    // timersub(&end, &(request->arrival_time), &(stats->dispatch_time));
+    queueInsert(pq->running_queue, request, stats->thread_id);
+    // update stats
+    stats->all_req++;
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    stats->req_arrival = request->req_arrival;
+    timersub(&now, &request->req_arrival, &stats->req_dispatch);
 
     pthread_mutex_unlock(&(pq->mutex));
     return request;
@@ -236,7 +237,7 @@ void removeRequest(ProcessQueue *pq, int thread_id)
     free(request);
     if (pq->waiting_queue->size + pq->running_queue->size <= 0)
     {
-        printf("EMPTY\n");
+        // printf("EMPTY\n");
         pthread_cond_signal(&(pq->empty));
     }
     pthread_cond_signal(&(pq->not_full));

@@ -20,8 +20,18 @@ typedef enum
 typedef struct
 {
     int connfd;
-    struct timeval arrival_time;
+    struct timeval req_arrival;
 } Request;
+
+typedef struct
+{
+    struct timeval req_arrival;
+    struct timeval req_dispatch;
+    int thread_id;
+    int all_req;
+    int static_req;
+    int dynamic_req;
+} Stats;
 
 typedef struct node
 {
@@ -35,7 +45,7 @@ typedef struct
 {
     Node *head;
     Node *tail;
-    // int max_size;
+    int max_size;
     int size;
 } Queue;
 
@@ -68,7 +78,7 @@ void processQueueDestroy(ProcessQueue *queue); // inside c
 
 void getNewRequest(ProcessQueue *pq, Request *request); // inside c
 
-Request *runRequest(ProcessQueue *pq, int thread_id /*Stats *stats*/);
+Request *runRequest(ProcessQueue *pq, Stats *stats);
 
 void removeRequest(ProcessQueue *pq, int thread_id); // inside c
 
