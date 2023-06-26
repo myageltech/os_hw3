@@ -148,10 +148,12 @@ void getNewRequest(ProcessQueue *pq, Request *request)
             return;
             break;
         case DROP_HEAD:
+        {
             Request *temp = queuePopHead(pq->waiting_queue);
             close(temp->connfd);
             free(temp);
             break;
+        }
         case BLOCK_FLUSH:
             while (pq->waiting_queue->size && pq->running_queue->size)
             {
