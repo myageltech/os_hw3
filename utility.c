@@ -134,76 +134,78 @@ void processQueueDestroy(ProcessQueue *pq)
 void getNewRequest(ProcessQueue *pq, Request *request)
 {
     pthread_mutex_lock(&(pq->mutex));
-    switch (pq->policy)
-    {
-    case BLOCK:
-        if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
+    // if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
+    if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
+        switch (pq->policy)
         {
-            pthread_cond_wait(&pq->not_full, &pq->mutex);
-        }
-        break;
-    case DROP_TAIL:
-        if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
-        {
-            close(request->connfd);
-            free(request);
-            pthread_mutex_unlock(&(pq->mutex));
-            return;
-        }
-        break;
-    case DROP_HEAD:
-        if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
-        {
-            // pthread_mutex_unlock(&(pq->mutex));
-            Request *temp = queuePopHead(pq->waiting_queue);
-            close(temp->connfd);
-            free(temp);
-        }
-        break;
-    case BLOCK_FLUSH:
-        if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
-        {
-            pthread_cond_wait(&pq->empty, &pq->mutex);
-            // while (pq->waiting_queue->size && pq->running_queue->size)
-            // {
-            //     pthread_cond_wait(&pq->empty, &pq->mutex);
-            // }
-        }
-        break;
-    case DYNAMIC:
-        // if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
-        if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
-        {
-            close(request->connfd);
-            free(request);
-            if (pq->max_size < pq->dynamic_max_size)
+        case BLOCK:
+            if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
             {
-                pq->max_size++;
-                pq->waiting_queue->max_size++;
+                pthread_cond_wait(&pq->not_full, &pq->mutex);
             }
-            pthread_mutex_unlock(&(pq->mutex));
-            return;
-        }
-        break;
-    case DROP_RANDOM:
-        if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
-        {
-            for (int i = 0; i < pq->waiting_queue->max_size / 2; i++)
+            break;
+        case DROP_TAIL:
+            if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
             {
-                int random = rand() % pq->waiting_queue->size;
-                Node *temp = pq->waiting_queue->head;
-                for (int j = 0; j < random; j++)
+                close(request->connfd);
+                free(request);
+                pthread_mutex_unlock(&(pq->mutex));
+                return;
+            }
+            break;
+        case DROP_HEAD:
+            if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
+            {
+                // pthread_mutex_unlock(&(pq->mutex));
+                Request *temp = queuePopHead(pq->waiting_queue);
+                close(temp->connfd);
+                free(temp);
+            }
+            break;
+        case BLOCK_FLUSH:
+            if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
+            {
+                pthread_cond_wait(&pq->empty, &pq->mutex);
+                // while (pq->waiting_queue->size && pq->running_queue->size)
+                // {
+                //     pthread_cond_wait(&pq->empty, &pq->mutex);
+                // }
+            }
+            break;
+        case DYNAMIC:
+            if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
+            // if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
+            {
+                close(request->connfd);
+                free(request);
+                if (pq->max_size < pq->dynamic_max_size)
                 {
-                    temp = temp->next;
+                    pq->max_size++;
+                    pq->waiting_queue->max_size++;
                 }
-                temp->thread_id = 1;
-                Request *temp_request = queueRemoveById(pq->waiting_queue, 1);
-                close(temp_request->connfd);
-                free(temp_request);
+                pthread_mutex_unlock(&(pq->mutex));
+                return;
             }
+            break;
+        case DROP_RANDOM:
+            if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
+            {
+                for (int i = 0; i < pq->waiting_queue->max_size / 2; i++)
+                {
+                    int random = rand() % pq->waiting_queue->size;
+                    Node *temp = pq->waiting_queue->head;
+                    for (int j = 0; j < random; j++)
+                    {
+                        temp = temp->next;
+                    }
+                    temp->thread_id = 1;
+                    Request *temp_request = queueRemoveById(pq->waiting_queue, 1);
+                    close(temp_request->connfd);
+                    free(temp_request);
+                }
+            }
+            break;
         }
-        break;
-    }
     queueInsert(pq->waiting_queue, request, -1);
     pthread_cond_signal(&(pq->not_empty));
     pthread_mutex_unlock(&(pq->mutex));
