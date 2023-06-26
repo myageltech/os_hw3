@@ -27,7 +27,7 @@ void *thread_handler(void *t_args)
     {
         Request *data = runRequest(pq, &args->stats);
         int connfd = data->connfd;
-        requestHandle(connfd, args->stats);
+        requestHandle(connfd, &args->stats);
         removeRequest(pq, (args->stats).thread_id);
     }
     return NULL;
