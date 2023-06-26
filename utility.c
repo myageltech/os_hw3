@@ -1,10 +1,10 @@
 #include "utility.h"
 
-Queue *queueCreate(int max_size)
+Queue *queueCreate()
 {
     Queue *queue = (Queue *)malloc(sizeof(*queue));
     queue->size = 0;
-    queue->max_size = max_size;
+    // queue->max_size = max_size;
     queue->head = NULL;
     queue->tail = NULL;
     return queue;
@@ -94,9 +94,9 @@ Request *queueRemoveById(Queue *queue, int thread_id)
     return NULL;
 }
 
-ProcessQueue *processQueueCreate(int max_threads, int max_queue, int dynamic_max_size, POLICY policy)
+ProcessQueue *processQueueCreate(int max_queue, int dynamic_max_size, POLICY policy)
 {
-    if (max_threads < 0 || max_queue < 0 || dynamic_max_size < 0)
+    if (max_queue < 0 || dynamic_max_size < 0)
     {
         return NULL;
     }
@@ -105,10 +105,10 @@ ProcessQueue *processQueueCreate(int max_threads, int max_queue, int dynamic_max
     {
         exit(1); // maybe change to return NULL?
     }
-    pq->max_size = max_threads + max_queue;
+    pq->max_size = max_queue;
     pq->dynamic_max_size = dynamic_max_size;
-    pq->running_queue = queueCreate(max_threads);
-    pq->waiting_queue = queueCreate(max_queue);
+    pq->running_queue = queueCreate();
+    pq->waiting_queue = queueCreate();
     pq->policy = policy;
     if (!(pq->running_queue) || !(pq->waiting_queue))
     {
@@ -144,7 +144,7 @@ void getNewRequest(ProcessQueue *pq, Request *request)
         {
         case BLOCK:
         {
-            while (pq->waiting_queue->size >= pq->waiting_queue->max_size)
+            while (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
             {
                 pthread_cond_wait(&pq->not_full, &pq->mutex);
             }
@@ -179,14 +179,15 @@ void getNewRequest(ProcessQueue *pq, Request *request)
             if (pq->max_size < pq->dynamic_max_size)
             {
                 pq->max_size++;
-                pq->waiting_queue->max_size++;
+                // pq->waiting_queue->max_size++;
             }
             pthread_mutex_unlock(&(pq->mutex));
             return;
         }
         case DROP_RANDOM:
         {
-            for (int i = 0; i < pq->waiting_queue->max_size / 2; i++)
+            int num_to_drop = pq->waiting_queue->size / 2;
+            for (int i = 0; i < num_to_drop; i++)
             {
                 int random = rand() % pq->waiting_queue->size;
                 Node *temp = pq->waiting_queue->head;
