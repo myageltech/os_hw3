@@ -97,7 +97,8 @@ int main(int argc, char *argv[])
 
     getargs(&port, &thread_max, &process_max, &procces_real_max, &policy, argc, argv);
     ProcessQueue *pq = processQueueCreate(thread_max, process_max, procces_real_max, policy);
-
+    if (!pq)
+        exit(1);
     threadAux *thrd_args = malloc(thread_max * sizeof(*thrd_args));
     if (!thrd_args)
     {
