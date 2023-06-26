@@ -134,19 +134,25 @@ void processQueueDestroy(ProcessQueue *pq)
 void getNewRequest(ProcessQueue *pq, Request *request)
 {
     pthread_mutex_lock(&(pq->mutex));
-    // if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
-    if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
+    if (pq->waiting_queue->size + pq->running_queue->size >= pq->max_size)
+        // if (pq->waiting_queue->size >= pq->waiting_queue->max_size)
         switch (pq->policy)
         {
         case BLOCK:
-            pthread_cond_wait(&pq->not_full, &pq->mutex);
+        {
+            while (pq->waiting_queue->size >= pq->waiting_queue->max_size)
+            {
+                pthread_cond_waist(&pq->not_full, &pq->mutex);
+            }
             break;
+        }
         case DROP_TAIL:
+        {
             close(request->connfd);
             free(request);
             pthread_mutex_unlock(&(pq->mutex));
             return;
-            break;
+        }
         case DROP_HEAD:
         {
             Request *temp = queuePopHead(pq->waiting_queue);
@@ -155,12 +161,15 @@ void getNewRequest(ProcessQueue *pq, Request *request)
             break;
         }
         case BLOCK_FLUSH:
-            while (pq->waiting_queue->size && pq->running_queue->size)
+        {
+            while (pq->waiting_queue->size + pq->running_queue->size > 0)
             {
                 pthread_cond_wait(&pq->empty, &pq->mutex);
             }
             break;
+        }
         case DYNAMIC:
+        {
             close(request->connfd);
             free(request);
             if (pq->max_size < pq->dynamic_max_size)
@@ -170,8 +179,9 @@ void getNewRequest(ProcessQueue *pq, Request *request)
             }
             pthread_mutex_unlock(&(pq->mutex));
             return;
-            break;
+        }
         case DROP_RANDOM:
+        {
             for (int i = 0; i < pq->waiting_queue->max_size / 2; i++)
             {
                 int random = rand() % pq->waiting_queue->size;
@@ -186,6 +196,7 @@ void getNewRequest(ProcessQueue *pq, Request *request)
                 free(temp_request);
             }
             break;
+        }
         }
     queueInsert(pq->waiting_queue, request, -1);
     pthread_cond_signal(&(pq->not_empty));
