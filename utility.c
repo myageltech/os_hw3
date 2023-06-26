@@ -142,7 +142,7 @@ void getNewRequest(ProcessQueue *pq, Request *request)
         {
             while (pq->waiting_queue->size >= pq->waiting_queue->max_size)
             {
-                pthread_cond_waist(&pq->not_full, &pq->mutex);
+                pthread_cond_wait(&pq->not_full, &pq->mutex);
             }
             break;
         }
