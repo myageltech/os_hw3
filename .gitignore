@@ -1,3 +1,5 @@
 output.cgi.dSYM
 *.o
 .DS_Store
+scripts
+runscript.sh
