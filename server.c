@@ -27,8 +27,8 @@ void *thread_handler(void *t_args)
     {
         Request *data = runRequest(pq, &args->stats);
         int connfd = data->connfd;
-        requestHandle(connfd, &args->stats);
-        removeRequest(pq, (args->stats).id);
+        requestHandle(connfd, args->stats);
+        removeRequest(pq, (args->stats).thread_id);
     }
     return NULL;
 }
@@ -103,7 +103,9 @@ int main(int argc, char *argv[])
     {
         thrd_args[i].id = i;
         thrd_args[i].pq = pq;
-        thrd_args->stats = {{0, 0}, {0, 0}, i, 0, 0, 0};
+        struct timeval temp = {0, 0};
+        
+        thrd_args->stats = {temp, temp, i, 0, 0, 0};
         pthread_create(&(thrd_args[i].thread), NULL, thread_handler, (void *)&thrd_args[i]);
     }
     listenfd = Open_listenfd(port);
