@@ -23,11 +23,14 @@ void *thread_handler(void *t_args)
 {
     threadAux *args = (threadAux *)t_args;
     ProcessQueue *pq = args->pq;
+    printf("stats->thread_id: %d, pthread_self(): %ld\n", args->stats.thread_id, pthread_self());
     while (1)
     {
+        printf("thread %d running\n", args->stats.thread_id);
         Request *data = runRequest(pq, &args->stats);
         int connfd = data->connfd;
         requestHandle(connfd, &args->stats);
+        printf("thread %d removing\n", args->stats.thread_id);
         removeRequest(pq, (args->stats).thread_id);
     }
     return NULL;
