@@ -40,6 +40,11 @@ sleep 1
 ./client localhost 2002 home.html > trash.out  2> errors.txt #should get error 
 echo "Rio_readlineb error: Connection reset by peer" >expected.out
 if (!(cmp -s errors.txt  expected.out  )); then
+echo "*********************************errors file*********************************"
+cat errors.txt
+echo "*********************************expected file*********************************"
+cat expected.out
+echo "*********************************continue*********************************"
     if(!(cmp -s errors.txt prevstate.txt)|| !(cmp -s trash.out empty.txt)); then
         echo "failed"
         echo "3"
