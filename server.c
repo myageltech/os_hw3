@@ -21,7 +21,10 @@ typedef struct
 
 void *thread_handler(void *t_args)
 {
+
     threadAux *args = (threadAux *)t_args;
+    struct timeval temp = {0, 0};
+    args->stats = (Stats){.req_arrival = temp, .req_dispatch = temp, .thread_id = args->id, .all_req = 0, .static_req = 0, .dynamic_req = 0};
     ProcessQueue *pq = args->pq;
     printf("stats->thread_id: %d, pthread_self(): %ld\n", args->stats.thread_id, pthread_self());
     while (1)
@@ -106,8 +109,6 @@ int main(int argc, char *argv[])
     {
         thrd_args[i].id = i;
         thrd_args[i].pq = pq;
-        struct timeval temp = {0, 0};
-        thrd_args[i].stats = (Stats){.req_arrival = temp, .req_dispatch = temp, .thread_id = i, .all_req = 0, .static_req = 0, .dynamic_req = 0};
         pthread_create(&(thrd_args[i].thread), NULL, thread_handler, (void *)&thrd_args[i]);
     }
     printf("threads num: %d\n", thread_max);
