@@ -107,6 +107,7 @@ int main(int argc, char *argv[])
         thrd_args[i].stats = (Stats){.req_arrival = temp, .req_dispatch = temp, .thread_id = i, .all_req = 0, .static_req = 0, .dynamic_req = 0};
         pthread_create(&(thrd_args[i].thread), NULL, thread_handler, (void *)&thrd_args[i]);
     }
+    printf("threads num: %d\n", thread_max);
     listenfd = Open_listenfd(port);
     while (1)
     {

@@ -168,7 +168,7 @@ void getNewRequest(ProcessQueue *pq, Request *request)
         {
             while (pq->waiting_queue->size + pq->running_queue->size > 0)
             {
-                // printf("WAITING\n");
+                printf("waiting to flush\n");
                 pthread_cond_wait(&pq->empty, &pq->mutex);
             }
             break;
@@ -211,6 +211,7 @@ Request *runRequest(ProcessQueue *pq, Stats *stats)
     pthread_mutex_lock(&(pq->mutex));
     while (pq->waiting_queue->size == 0)
     {
+        printf("thread %d waiting\n", stats->thread_id);
         pthread_cond_wait(&(pq->not_empty), &(pq->mutex));
     }
     Request *request = queuePopHead(pq->waiting_queue);
@@ -237,7 +238,8 @@ void removeRequest(ProcessQueue *pq, int thread_id)
     free(request);
     if (pq->waiting_queue->size + pq->running_queue->size <= 0)
     {
-        // printf("EMPTY\n");
+        printf("EMPTY, running size: %d, waiting size: %d\n", pq->running_queue->size, pq->waiting_queue->size);
+        printf("max size: %d\n", pq->max_size);
         pthread_cond_signal(&(pq->empty));
     }
     pthread_cond_signal(&(pq->not_full));

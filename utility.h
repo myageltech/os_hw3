@@ -45,7 +45,7 @@ typedef struct
 {
     Node *head;
     Node *tail;
-    int max_size;
+    // int max_size;
     int size;
 } Queue;
 
