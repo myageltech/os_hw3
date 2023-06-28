@@ -168,10 +168,10 @@ void getNewRequest(ProcessQueue *pq, Request *request)
         {
             while (pq->waiting_queue->size + pq->running_queue->size > 0)
             {
-                printf("waiting to flush\n");
+                // printf("waiting to flush\n");
                 pthread_cond_wait(&pq->empty, &pq->mutex);
             }
-            printf("flushed\n");
+            // printf("flushed\n");
             break;
         }
         case DYNAMIC:
@@ -212,7 +212,7 @@ Request *runRequest(ProcessQueue *pq, Stats *stats)
     pthread_mutex_lock(&(pq->mutex));
     while (pq->waiting_queue->size == 0)
     {
-        printf("thread %d waiting\n", stats->thread_id);
+        // printf("thread %d waiting\n", stats->thread_id);
         pthread_cond_wait(&(pq->not_empty), &(pq->mutex));
     }
     Request *request = queuePopHead(pq->waiting_queue);
@@ -239,7 +239,7 @@ void removeRequest(ProcessQueue *pq, int thread_id)
     free(request);
     if (pq->waiting_queue->size + pq->running_queue->size <= 0)
     {
-        printf("QUEUES ARE EMPTY\n");
+        // printf("QUEUES ARE EMPTY\n");
         pthread_cond_signal(&(pq->empty));
     }
     pthread_cond_signal(&(pq->not_full));
